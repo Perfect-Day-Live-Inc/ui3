@@ -151,3 +151,5 @@ function Queue()
 		offset = 0;
 	}
 }
+
+export default Queue;

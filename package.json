@@ -1,0 +1,21 @@
+{
+  "name": "ui3",
+  "version": "1.0.0",
+  "description": "A powerful, modern HTML5 web interface for Blue Iris. ",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Perfect-Day-Live-inc/ui3.git"
+  },
+  "keywords": [],
+  "author": "bp2008",
+  "license": "LGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/Perfect-Day-Live-inc/ui3/issues"
+  },
+  "homepage": "https://github.com/Perfect-Day-Live-inc/ui3#readme"
+}
