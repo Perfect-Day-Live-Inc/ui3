@@ -511,17 +511,31 @@ export function PcmAudioPlayer(
   };
   this.SetAudioVolumeFromSettings = function (volume) {
     if (!supported) return;
-    this.SetVolume(volume); // Assume volume is between 0 and 1
+    var effectiveVolume =
+      volume || settings.ui3_audioMute == "1"
+        ? 0
+        : parseFloat(settings.ui3_audioVolume);
+    suppressAudioVolumeSave = true;
+    setTimeout(function () {
+      suppressAudioVolumeSave = false;
+    }, 0);
+    if (volumeSlider) {
+      volumeSlider.setPosition(effectiveVolume);
+    } else {
+      this.SetVolume(effectiveVolume);
+    }
   };
   this.SetVolume = function (newVolume) {
     if (!supported) return;
     clearMuteStopTimeout();
     currentVolume = newVolume;
     newVolume = Clamp(newVolume, 0, 1);
-    volumeController.gain.value = newVolume;
-    if (newVolume === 0)
+    volumeController.gain.value = newVolume * newVolume; // Don't use setValueAtTime method because it has issues (UI3-v17 + Chrome 66 was affected)
+    if (volumeIconHelper) volumeIconHelper.setIconForVolume(newVolume);
+    if (newVolume == 0)
       audioStopTimeout = setTimeout(toggleAudioPlayback, 1000);
     else toggleAudioPlayback();
+    if (mqttClient) mqttClient.volumeChanged();
   };
   this.GetVolume = function () {
     if (!supported) return 0;
