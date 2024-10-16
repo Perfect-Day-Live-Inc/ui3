@@ -315,7 +315,7 @@ function AudioEdgeFilterRaw(audio32) {
 ///////////////////////////////////////////////////////////////
 export function PcmAudioPlayer(
   settings,
-  audio_playback_supported,
+  audio_playback_supported = true,
   DoAudioDecodingFallback,
   volumeIconHelper,
   ui3AudioVisualizer,
@@ -448,11 +448,9 @@ export function PcmAudioPlayer(
 
     var duration = bufferSource.buffer.duration;
     var offset = currentTime - nextTime;
-    var maxDelayMs = Clamp(
-      parseInt(settings.ui3_audio_buffer_ms) / 1000,
-      0,
-      5000
-    );
+    var maxDelayMs = settings
+      ? Clamp(parseInt(settings.ui3_audio_buffer_ms) / 1000, 0, 5000)
+      : 1000;
     if (offset > 0) {
       // This frame is late. Play it immediately.
       nextTime = currentTime;
@@ -511,17 +509,32 @@ export function PcmAudioPlayer(
   };
   this.SetAudioVolumeFromSettings = function (volume) {
     if (!supported) return;
-    this.SetVolume(volume); // Assume volume is between 0 and 1
+    var effectiveVolume = settings
+      ? volume || settings.ui3_audioMute == "1"
+        ? 0
+        : parseFloat(settings.ui3_audioVolume)
+      : volume;
+    suppressAudioVolumeSave = true;
+    setTimeout(function () {
+      suppressAudioVolumeSave = false;
+    }, 0);
+    if (volumeSlider) {
+      volumeSlider.setPosition(effectiveVolume);
+    } else {
+      this.SetVolume(effectiveVolume);
+    }
   };
   this.SetVolume = function (newVolume) {
     if (!supported) return;
     clearMuteStopTimeout();
     currentVolume = newVolume;
     newVolume = Clamp(newVolume, 0, 1);
-    volumeController.gain.value = newVolume;
-    if (newVolume === 0)
+    volumeController.gain.value = newVolume * newVolume; // Don't use setValueAtTime method because it has issues (UI3-v17 + Chrome 66 was affected)
+    if (volumeIconHelper) volumeIconHelper.setIconForVolume(newVolume);
+    if (newVolume == 0)
       audioStopTimeout = setTimeout(toggleAudioPlayback, 1000);
     else toggleAudioPlayback();
+    if (mqttClient) mqttClient.volumeChanged();
   };
   this.GetVolume = function () {
     if (!supported) return 0;
