@@ -315,7 +315,7 @@ function AudioEdgeFilterRaw(audio32) {
 ///////////////////////////////////////////////////////////////
 export function PcmAudioPlayer(
   settings,
-  audio_playback_supported,
+  audio_playback_supported = true,
   DoAudioDecodingFallback,
   volumeIconHelper,
   ui3AudioVisualizer,
@@ -448,11 +448,9 @@ export function PcmAudioPlayer(
 
     var duration = bufferSource.buffer.duration;
     var offset = currentTime - nextTime;
-    var maxDelayMs = Clamp(
-      parseInt(settings.ui3_audio_buffer_ms) / 1000,
-      0,
-      5000
-    );
+    var maxDelayMs = settings
+      ? Clamp(parseInt(settings.ui3_audio_buffer_ms) / 1000, 0, 5000)
+      : 1000;
     if (offset > 0) {
       // This frame is late. Play it immediately.
       nextTime = currentTime;
@@ -511,10 +509,11 @@ export function PcmAudioPlayer(
   };
   this.SetAudioVolumeFromSettings = function (volume) {
     if (!supported) return;
-    var effectiveVolume =
-      volume || settings.ui3_audioMute == "1"
+    var effectiveVolume = settings
+      ? volume || settings.ui3_audioMute == "1"
         ? 0
-        : parseFloat(settings.ui3_audioVolume);
+        : parseFloat(settings.ui3_audioVolume)
+      : volume;
     suppressAudioVolumeSave = true;
     setTimeout(function () {
       suppressAudioVolumeSave = false;
